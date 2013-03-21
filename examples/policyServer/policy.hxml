@@ -1,0 +1,6 @@
+-cp ../../src
+-main com.example.Policy
+-neko build/policy.n
+-D server
+-debug
+-cmd nekotools boot build/policy.n

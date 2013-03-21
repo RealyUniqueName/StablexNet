@@ -1,0 +1,6 @@
+-cp ../../src
+-main com.example.Server
+-neko build/server.n
+-D server
+-debug
+-cmd nekotools boot build/server.n
