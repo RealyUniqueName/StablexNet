@@ -2,7 +2,7 @@ package ru.stablex.net;
 
 import haxe.io.Eof;
 import haxe.io.Error;
-import haxe.Stack;
+import haxe.CallStack;
 #if cpp
 import cpp.net.Poll;
 import cpp.vm.Deque;
@@ -68,17 +68,17 @@ class SxServer<Client,Message> {
     private function _init() : Void {
         //update thread
         if( this.updateInterval > 0 ){
-            this._updater = Thread.create( callback(this._runThread, this._update) );
+            this._updater = Thread.create( this._runThread.bind(this._update) );
         }
 
         //worker thread
-        this._worker = Thread.create( callback(this._runThread, this._work) );
+        this._worker = Thread.create( this._runThread.bind(this._work) );
 
         //client threads
         var data : ThreadData<Client,Message>;
         for(i in this._threads.length...this.maxClientThreads){
             data = new ThreadData();
-            data.thread = Thread.create( callback(this._runThread, callback(this._clients, data)) );
+            data.thread = Thread.create( this._runThread.bind( this._clients.bind(data) ) );
 
             this._threads.push(data);
         }
@@ -132,7 +132,7 @@ class SxServer<Client,Message> {
 
         //send socket to selected thread
         }else{
-            data.thread.sendMessage( callback(this._startInitClient, data, s) );
+            data.thread.sendMessage( this._startInitClient.bind(data, s) );
         }
     }//function _addSocket()
 
@@ -196,7 +196,7 @@ class SxServer<Client,Message> {
     */
     private function _clients(data:ThreadData<Client,Message>) : Void {
         //run thread to read data from sockets
-        var readThread : Thread = Thread.create( callback(this._runThread, callback(this._read, data)) );
+        var readThread : Thread = Thread.create( this._runThread.bind( this._read.bind(data) ) );
 
         var fn : Void->Void;
         while(true){
@@ -309,7 +309,7 @@ class SxServer<Client,Message> {
 
         //if not in worker thread, send to worker
         }else{
-            this.work( callback(this._connect, data, clientData) );
+            this.work( this._connect.bind(data, clientData) );
         }
     }//function _connect()
 
@@ -328,7 +328,7 @@ class SxServer<Client,Message> {
             clientData.server = null;
             data.socks.push(clientData.sock);
 
-            data.thread.sendMessage( callback(this.disconnect, data, clientData) );
+            data.thread.sendMessage( this.disconnect.bind( data, clientData) );
 
         //in client-thread
         }else{
@@ -348,7 +348,7 @@ class SxServer<Client,Message> {
                 }
 
                 //process disconnect
-                this.work( callback(this.onDisconnect, clientData.client) );
+                this.work( this.onDisconnect.bind(clientData.client) );
             }
         }
     }//function disconnect()
@@ -359,12 +359,12 @@ class SxServer<Client,Message> {
     *
     */
     public function error(e:Dynamic, sendStack:Bool = true) : Void {
-        var stack : Array<StackItem> = (sendStack ? Stack.exceptionStack() : null);
+        var stack : Array<StackItem> = (sendStack ? CallStack.exceptionStack() : null);
 
         if( Thread.current() == this._worker ){
             this.onError(e, stack);
         }else{
-            this.work( callback(onError, e, stack) );
+            this.work( onError.bind(e, stack) );
         }
     }//function error()
 
@@ -410,7 +410,7 @@ class SxServer<Client,Message> {
                     pos    += msgExt.length;
                     length -= msgExt.length;
 
-                    this.work( callback(this.onMessage, clientData.client, msgExt.msg) );
+                    this.work( this.onMessage.bind(clientData.client, msgExt.msg) );
                 }
             }//while()
 
@@ -487,7 +487,7 @@ class SxServer<Client,Message> {
     */
     public dynamic function onError(e:Dynamic, exceptionStack:Null<Array<StackItem>>) : Void {
         if( exceptionStack != null && exceptionStack.length > 0 ){
-            trace(Stack.toString(exceptionStack));
+            trace(CallStack.toString(exceptionStack));
         }
         trace(e);
     }//function onError()
