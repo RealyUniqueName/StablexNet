@@ -1,12 +1,12 @@
 package com.example;
 
-import nme.display.Sprite;
-import nme.events.Event;
-import nme.events.KeyboardEvent;
-import nme.Lib;
-import nme.text.TextFieldAutoSize;
-import nme.text.TextField;
-import nme.text.TextFieldType;
+import flash.display.Sprite;
+import flash.events.Event;
+import flash.events.KeyboardEvent;
+import flash.Lib;
+import flash.text.TextFieldAutoSize;
+import flash.text.TextField;
+import flash.text.TextFieldType;
 import ru.stablex.net.SxClient;
 import ru.stablex.net.MsgExtract;
 
@@ -48,8 +48,9 @@ class Client extends Sprite {
 
         //create socket connection with string messages
         var client = new SxClient<String>();
-        client.extract      = callback(MsgExtract.extractString, "\n");
-        client.pack         = callback(MsgExtract.packString, "\n");
+        //client.extract      = callback(MsgExtract.extractString, "\n");
+        client.extract      = MsgExtract.extractString.bind("\n");
+        client.pack         = MsgExtract.packString.bind("\n");
         client.onMessage    = this.onMessage;
         client.onConnect    = this.onConnect;
         client.onDisconnect = this.onDisconnect;
@@ -63,6 +64,7 @@ class Client extends Sprite {
 
         //connect to server
         client.connect('localhost', 20000);
+        this.showMsg('Trying to connect...');
 
         //This is not required for flash target, since flash already handles socket events.
         //Does nothing for flash{
