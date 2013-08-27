@@ -1,6 +1,6 @@
 package ru.stablex.net;
 
-import haxe.Stack;
+import haxe.CallStack;
 import haxe.io.Bytes;
 
 #if flash
@@ -98,7 +98,7 @@ class SxClient<Message> {
             }
         #else
             if( this._main == null ) this._main = Thread.current();
-            if( this._send == null ) this._send = Thread.create( callback(this._runThread, this._threadSend) );
+            if( this._send == null ) this._send = Thread.create( this._runThread.bind(this._threadSend) );
         #end
     }//function connect()
 
@@ -130,7 +130,7 @@ class SxClient<Message> {
     *
     */
     public function error(e:Dynamic, noStack:Bool = false) : Void {
-        var stack : Array<StackItem> = (noStack ? null : Stack.exceptionStack());
+        var stack : Array<StackItem> = (noStack ? null : CallStack.exceptionStack());
 
         #if flash
             this.onError(e, stack);
@@ -138,7 +138,7 @@ class SxClient<Message> {
             if( Thread.current() == this._main ){
                 this.onError(e, stack);
             }else{
-                this._fire( callback(onError, e, stack) );
+                this._fire( onError.bind(e, stack) );
             }
         #end
     }//function error()
@@ -163,7 +163,7 @@ class SxClient<Message> {
             }
         #else
             if( Thread.current() != this._send ){
-                this._send.sendMessage( callback(this.send, msg) );
+                this._send.sendMessage( this.send.bind(msg) );
             }else{
                 try{
                     if( this.online ){
@@ -270,7 +270,7 @@ class SxClient<Message> {
     */
     public dynamic function onError(e:Dynamic, exceptionStack:Null<Array<StackItem>>) : Void {
         if( exceptionStack != null && exceptionStack.length > 0 ){
-            trace(Stack.toString(exceptionStack));
+            trace(CallStack.toString(exceptionStack));
         }
         trace(e);
     }//function onError()
@@ -444,7 +444,7 @@ class SxClient<Message> {
         //}
 
         //run reading thread
-        if( this._read == null ) this._read = Thread.create( callback(this._runThread, this._threadRead) );
+        if( this._read == null ) this._read = Thread.create( this._runThread.bind(this._threadRead) );
 
         //now wait for messages
         while(this.online){
@@ -525,7 +525,7 @@ class SxClient<Message> {
                     pos    += msgExt.length;
                     length -= msgExt.length;
 
-                    this._fire( callback(this.onMessage, msgExt.msg) );
+                    this._fire( this.onMessage.bind(msgExt.msg) );
                 }
             }//while()
 

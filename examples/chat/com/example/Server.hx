@@ -27,8 +27,8 @@ class Server extends SxServer<TClient,String>{
         Server.inst = new Server();
 
         //methods to pack/extract data from messages
-        Server.inst.pack    = callback(MsgExtract.packString, "\n");
-        Server.inst.extract = callback(MsgExtract.extractString, "\n");
+        Server.inst.pack    = MsgExtract.packString.bind("\n");
+        Server.inst.extract = MsgExtract.extractString.bind("\n");
 
         Server.inst.users = new List();
 
